@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#17181c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Earnings Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f5f6fa;
+    color: #17181c;
+  }
+  .wrap { max-width: 1050px; margin: 0 auto; padding: 28px 18px 60px; }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; margin-bottom: 22px;
+  }
+  h1 { margin: 0; font-size: 30px; }
+  .subtitle { color: #70747d; margin-top: 5px; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+  button, input {
+    font: inherit;
+  }
+  button {
+    border: 0; border-radius: 10px; padding: 10px 14px; cursor: pointer;
+    background: #17181c; color: white; font-weight: 650;
+  }
+  button.secondary { background: white; color: #17181c; border: 1px solid #dddfe5; }
+  button.danger { background: #fff0f0; color: #b42318; border: 1px solid #ffd1d1; }
+  .cards {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px;
+  }
+  .card {
+    background: white; border: 1px solid #e5e7eb; border-radius: 16px;
+    padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.03);
+  }
+  .label { color: #777b84; font-size: 13px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; }
+  .amount { font-size: 28px; font-weight: 800; margin-top: 6px; }
+  .panel {
+    background: white; border: 1px solid #e5e7eb; border-radius: 16px;
+    overflow: hidden; margin-bottom: 18px;
+  }
+  .panel-head {
+    padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #eee; gap: 12px; flex-wrap: wrap;
+  }
+  .panel-head h2 { margin: 0; font-size: 19px; }
+  .week-range { color: #777b84; font-size: 14px; }
+  .days { padding: 10px 18px 18px; }
+  .day {
+    display: grid; grid-template-columns: 100px 1fr 150px 40px;
+    gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f1f3;
+  }
+  .day:last-child { border-bottom: 0; }
+  .day-name { font-weight: 700; }
+  .date { color: #777b84; font-size: 13px; margin-top: 2px; }
+  .money {
+    width: 100%; padding: 11px 12px; border: 1px solid #dfe1e6; border-radius: 9px;
+    outline: none; background: #fff;
+  }
+  .money:focus { border-color: #17181c; }
+  .day-total { text-align: right; font-weight: 750; }
+  .week-total {
+    padding: 16px 18px; background: #fafafa; display: flex; justify-content: space-between;
+    font-weight: 800; font-size: 17px;
+  }
+  .target-wrap { padding: 14px 18px 0; }
+  .target-line { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
+  .target-label { font-weight:750; }
+  .target-value { color:#777b84; font-size:14px; }
+  .progress { height:9px; background:#eceef2; border-radius:999px; overflow:hidden; }
+  .progress-bar { height:100%; width:0%; border-radius:999px; background:#17181c; transition:width .2s ease; }
+  .target-input { width:110px; padding:8px 10px; border:1px solid #dfe1e6; border-radius:8px; text-align:right; }
+  .week-list, .month-list { padding: 0; }
+  .summary-row {
+    display: grid; grid-template-columns: 1fr 160px 160px; gap: 10px;
+    padding: 14px 18px; border-bottom: 1px solid #eee; align-items: center;
+  }
+  .summary-row:last-child { border-bottom: 0; }
+  .summary-row .right { text-align: right; font-weight: 750; }
+  .empty { padding: 22px 18px; color: #777b84; }
+  .hint { color:#777b84; font-size:13px; margin-top:10px; }
+  @media (max-width: 720px) {
+    .cards { grid-template-columns: 1fr; }
+    .day { grid-template-columns: 1fr 1fr 90px 36px; }
+    .day > .day-name { grid-column: span 2; }
+    .summary-row { grid-template-columns: 1fr 110px; }
+    .summary-row .period { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>💰 Earnings Tracker</h1>
+      <div class="subtitle">Track Monday–Saturday earnings. Sundays start a new week.</div>
+    </div>
+    <div class="controls">
+      <button class="secondary" id="prevBtn">← Previous week</button>
+      <button id="todayBtn">Current week</button>
+      <button class="secondary" id="nextBtn">Next week →</button>
+    </div>
+  </header>
+
+  <div class="cards">
+    <div class="card"><div class="label">Current week</div><div class="amount" id="currentWeekTotal">$0.00</div></div>
+    <div class="card"><div class="label">Current month</div><div class="amount" id="currentMonthTotal">$0.00</div></div>
+    <div class="card"><div class="label">All time</div><div class="amount" id="allTimeTotal">$0.00</div></div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 id="weekTitle">Week</h2>
+        <div class="week-range" id="weekRange"></div>
+      </div>
+      <button class="danger" id="clearWeek">Clear this week</button>
+    </div>
+    <div class="target-wrap">
+      <div class="target-line">
+        <div>
+          <div class="target-label">Weekly target</div>
+          <div class="target-value" id="targetStatus">$0.00 of $300.00</div>
+        </div>
+        <label>
+          <span style="font-size:13px;color:#777b84;margin-right:5px;">Target</span>
+          <input id="targetInput" class="target-input" inputmode="decimal" type="number" min="0" step="1" value="300">
+        </label>
+      </div>
+      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+    <div class="days" id="days"></div>
+    <div class="week-total"><span>Week total</span><span id="weekTotal">$0.00</span></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>📅 Weekly totals</h2></div>
+    <div id="weeks" class="week-list"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>📊 Monthly totals</h2></div>
+    <div id="months" class="month-list"></div>
+  </section>
+
+  <div class="hint">Your earnings are saved automatically in this browser using local storage.</div>
+</div>
+
+<script>
+const STORAGE_KEY = "earningsTracker2026";
+let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+let selectedMonday = getMonday(new Date());
+
+const money = n => new Intl.NumberFormat("en-AU", {
+  style: "currency", currency: "AUD"
+}).format(n || 0);
+
+function keyDate(d) {
+  return d.toISOString().slice(0,10);
+}
+function localDate(s) {
+  const [y,m,day] = s.split("-").map(Number);
+  return new Date(y, m-1, day);
+}
+function getMonday(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+function addDays(date, n) {
+  const d = new Date(date); d.setDate(d.getDate()+n); return d;
+}
+function formatDate(d) {
+  return d.toLocaleDateString("en-AU", {day:"numeric", month:"short", year:"numeric"});
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  render();
+}
+function getWeekTotal(monday) {
+  let total = 0;
+  for (let i=0;i<6;i++) total += Number(data[keyDate(addDays(monday,i))] || 0);
+  return total;
+}
+function renderDays() {
+  const el = document.getElementById("days");
+  el.innerHTML = "";
+  const names = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  for (let i=0;i<6;i++) {
+    const d = addDays(selectedMonday,i);
+    const key = keyDate(d);
+    const row = document.createElement("div");
+    row.className = "day";
+    row.innerHTML = `
+      <div class="day-name">${names[i]}<div class="date">${formatDate(d)}</div></div>
+      <input class="money" inputmode="decimal" type="number" min="0" step="0.01"
+             placeholder="0.00" value="${data[key] ?? ""}" data-key="${key}">
+      <div class="day-total">${money(Number(data[key] || 0))}</div>
+      <button class="secondary" style="padding:7px 9px" title="Clear" data-clear="${key}">×</button>
+    `;
+    el.appendChild(row);
+  }
+  el.querySelectorAll("input").forEach(input => {
+    input.addEventListener("input", e => {
+      const key = e.target.dataset.key;
+      const value = e.target.value;
+      if (value === "") delete data[key];
+      else data[key] = Number(value);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+      // Update totals without rebuilding the input, so the mobile keyboard stays open.
+      const row = e.target.closest(".day");
+      row.querySelector(".day-total").textContent = money(Number(value || 0));
+      const total = getWeekTotal(selectedMonday);
+      document.getElementById("weekTotal").textContent = money(total);
+      document.getElementById("currentWeekTotal").textContent = money(total);
+      updateTarget(total);
+      renderSummaries();
+    });
+  });
+  el.querySelectorAll("[data-clear]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      delete data[btn.dataset.clear]; save();
+    });
+  });
+}
+function renderSummaries() {
+  const weeks = {};
+  const months = {};
+  Object.keys(data).forEach(k => {
+    const d = localDate(k);
+    const monday = getMonday(d);
+    const wk = keyDate(monday);
+    weeks[wk] = (weeks[wk] || 0) + Number(data[k] || 0);
+    const mo = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    months[mo] = (months[mo] || 0) + Number(data[k] || 0);
+  });
+
+  const weekEntries = Object.entries(weeks).sort((a,b)=>b[0].localeCompare(a[0]));
+  document.getElementById("weeks").innerHTML = weekEntries.length ? weekEntries.map(([k,v]) => {
+    const m = localDate(k), s = addDays(m,5);
+    return `<div class="summary-row"><div><b>Week starting ${formatDate(m)}</b></div><div class="period">${formatDate(m)} – ${formatDate(s)}</div><div class="right">${money(v)}</div></div>`;
+  }).join("") : '<div class="empty">No completed earnings entered yet.</div>';
+
+  const monthEntries = Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0]));
+  document.getElementById("months").innerHTML = monthEntries.length ? monthEntries.map(([k,v]) => {
+    const [y,m] = k.split("-");
+    const label = new Date(Number(y), Number(m)-1, 1).toLocaleDateString("en-AU",{month:"long",year:"numeric"});
+    return `<div class="summary-row"><div><b>${label}</b></div><div></div><div class="right">${money(v)}</div></div>`;
+  }).join("") : '<div class="empty">No monthly totals yet.</div>';
+
+  const all = Object.values(data).reduce((a,b)=>a+Number(b||0),0);
+  const currentMonthKey = `${selectedMonday.getFullYear()}-${String(selectedMonday.getMonth()+1).padStart(2,"0")}`;
+  document.getElementById("allTimeTotal").textContent = money(all);
+  document.getElementById("currentMonthTotal").textContent = money(monthEntries.find(x=>x[0]===currentMonthKey)?.[1] || 0);
+}
+function getTarget() {
+  const saved = localStorage.getItem("earningsWeeklyTarget");
+  return saved === null ? 300 : Number(saved);
+}
+function updateTarget(total) {
+  const target = getTarget();
+  const pct = target > 0 ? Math.min((total / target) * 100, 100) : 0;
+  document.getElementById("targetStatus").textContent = `${money(total)} of ${money(target)}`;
+  document.getElementById("progressBar").style.width = pct + "%";
+  document.getElementById("targetInput").value = target;
+}
+function render() {
+  const end = addDays(selectedMonday,5);
+  document.getElementById("weekTitle").textContent = "Earnings for the week";
+  document.getElementById("weekRange").textContent = `${formatDate(selectedMonday)} – ${formatDate(end)}`;
+  const total = getWeekTotal(selectedMonday);
+  document.getElementById("weekTotal").textContent = money(total);
+  document.getElementById("currentWeekTotal").textContent = money(total);
+  renderDays();
+  renderSummaries();
+  updateTarget(total);
+}
+document.getElementById("prevBtn").onclick = () => { selectedMonday = addDays(selectedMonday,-7); render(); };
+document.getElementById("nextBtn").onclick = () => { selectedMonday = addDays(selectedMonday,7); render(); };
+document.getElementById("todayBtn").onclick = () => { selectedMonday = getMonday(new Date()); render(); };
+document.getElementById("targetInput").addEventListener("change", e => {
+  const value = Math.max(0, Number(e.target.value || 0));
+  localStorage.setItem("earningsWeeklyTarget", String(value));
+  updateTarget(getWeekTotal(selectedMonday));
+});
+
+document.getElementById("clearWeek").onclick = () => {
+  if (!confirm("Clear all earnings for this Monday–Saturday week?")) return;
+  for (let i=0;i<6;i++) delete data[keyDate(addDays(selectedMonday,i))];
+  save();
+};
+render();
+</script>
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>

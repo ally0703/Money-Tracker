@@ -1,0 +1,10 @@
+{
+  "name": "Earnings Tracker",
+  "short_name": "Earnings",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f6fa",
+  "theme_color": "#17181c",
+  "description": "Track daily earnings, weekly $300 targets and monthly totals.",
+  "icons": []
+}
